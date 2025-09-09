@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-t4-qwen25-1-5b
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vllm-t4-qwen25-1-5b
+  template:
+    metadata:
+      labels:
+        app: vllm-t4-qwen25-1-5b
+      annotations:
+        nvidia.com/use-gputype: "T4"
+        hami.io/gpu-scheduler-policy: "binpack"
+    spec:
+      containers:
+      - name: vllm
+        image: vllm/vllm-openai:latest
+        command: ["vllm"]
+        args:
+          - "serve"
+          - "Qwen/Qwen2.5-1.5B-Instruct"
+          - "--dtype"
+          - "auto"
+          - "--gpu-memory-utilization"
+          - "0.65"
+          - "--max-model-len"
+          - "2048"
+          - "--max-num-seqs"
+          - "3"
+        ports:
+        - name: http
+          containerPort: 8000
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+            nvidia.com/gpumem: "7500"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm-t4-qwen25-1-5b
+spec:
+  selector:
+    app: vllm-t4-qwen25-1-5b
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000

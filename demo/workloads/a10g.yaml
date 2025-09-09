@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-a10g-mistral7b-awq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vllm-a10g-mistral7b-awq
+  template:
+    metadata:
+      labels:
+        app: vllm-a10g-mistral7b-awq
+      annotations:
+        nvidia.com/use-gputype: "A10G"
+        hami.io/gpu-scheduler-policy: "binpack"
+    spec:
+      containers:
+      - name: vllm
+        image: vllm/vllm-openai:latest
+        command: ["vllm"]
+        args:
+          - "serve"
+          - "solidrust/Mistral-7B-Instruct-v0.3-AWQ"
+          - "--quantization"
+          - "awq"
+          - "--dtype"
+          - "auto"
+          - "--gpu-memory-utilization"
+          - "0.65"
+          - "--max-model-len"
+          - "2048"
+          - "--max-num-seqs"
+          - "4"
+        ports:
+        - name: http
+          containerPort: 8000
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+            nvidia.com/gpumem-percentage: "45"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm-a10g-mistral7b-awq
+spec:
+  selector:
+    app: vllm-a10g-mistral7b-awq
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vllm-a10g-qwen25-7b-awq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vllm-a10g-qwen25-7b-awq
+  template:
+    metadata:
+      labels:
+        app: vllm-a10g-qwen25-7b-awq
+      annotations:
+        nvidia.com/use-gputype: "A10G"
+        hami.io/gpu-scheduler-policy: "binpack"
+    spec:
+      nodeSelector:
+        accelerator: "a10g"
+      containers:
+      - name: vllm
+        image: vllm/vllm-openai:latest
+        command: ["vllm"]
+        args:
+          - "serve"
+          - "Qwen/Qwen2.5-7B-Instruct-AWQ"
+          - "--quantization"
+          - "awq"
+          - "--dtype"
+          - "auto"
+          - "--gpu-memory-utilization"
+          - "0.65"
+          - "--max-model-len"
+          - "2048"
+          - "--max-num-seqs"
+          - "4"
+        ports:
+        - name: http
+          containerPort: 8000
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+            nvidia.com/gpumem-percentage: "45"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vllm-a10g-qwen25-7b-awq
+spec:
+  selector:
+    app: vllm-a10g-qwen25-7b-awq
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000

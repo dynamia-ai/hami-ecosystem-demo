@@ -1,0 +1,33 @@
+# macOS
+.DS_Store
+
+# Editor/IDE
+.idea/
+.vscode/
+*.code-workspace
+
+# Node/Python caches (if any samples added later)
+node_modules/
+dist/
+__pycache__/
+*.pyc
+
+# Terraform
+**/.terraform/
+*.tfvars
+*.tfvars.json
+# Keep the provider lock file committed
+!.terraform.lock.hcl
+
+# Local state files (use remote backend for real projects)
+**/terraform.tfstate
+**/terraform.tfstate.backup
+**/*.tfstate
+**/*.tfstate.*
+
+# Env files
+.env
+.env.*
+
+# Logs
+*.log
