@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: demo-a-node-binpack-gpu-binpack
 spec:
-  replicas: 2
+  replicas: 4
   selector:
     matchLabels:
       app: demo-a
