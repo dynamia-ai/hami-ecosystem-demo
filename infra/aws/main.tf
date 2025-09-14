@@ -15,6 +15,65 @@ locals {
     cidrsubnet(var.vpc_cidr, 4, 2),
     cidrsubnet(var.vpc_cidr, 4, 3),
   ]
+
+  # GPU node group configurations
+  gpu_node_group_configs = {
+    t4 = {
+      name            = "t4"
+      ami_type        = "AL2_x86_64_GPU"
+      instance_types  = ["g4dn.12xlarge"]
+      capacity_type   = "ON_DEMAND"
+      min_size        = 1
+      max_size        = 1
+      desired_size    = 1
+      disk_size       = 100
+      use_custom_launch_template = false
+      labels = {
+        "gpu"         = "on"
+        "accelerator" = "t4"
+      }
+    }
+    
+    a10g = {
+      name            = "a10g"
+      ami_type        = "AL2_x86_64_GPU"
+      instance_types  = ["g5.12xlarge"]
+      capacity_type   = "ON_DEMAND"
+      min_size        = 1
+      max_size        = 1
+      desired_size    = 1
+      disk_size       = 100
+      use_custom_launch_template = false
+      labels = {
+        "gpu"         = "on"
+        "accelerator" = "a10g"
+      }
+    }
+    
+    v100 = {
+      name            = "v100"
+      ami_type        = "AL2_x86_64_GPU"
+      instance_types  = ["p3.8xlarge"]  # 4x V100 GPUs
+      capacity_type   = "ON_DEMAND"
+      min_size        = 1
+      max_size        = 3
+      desired_size    = 1
+      disk_size       = 100
+      use_custom_launch_template = false
+      labels = {
+        "gpu"         = "on"
+        "accelerator" = "v100"
+      }
+    }
+  }
+
+  # Generate the final node groups configuration
+  eks_managed_node_groups = {
+    for gpu_type in var.enabled_gpu_node_groups : gpu_type => merge(
+      local.gpu_node_group_configs[gpu_type],
+      try(var.node_group_overrides[gpu_type], {})
+    )
+  }
 }
 
 module "vpc" {
@@ -58,39 +117,7 @@ module "eks" {
     aws-ebs-csi-driver = { most_recent = true }
   }
 
-  eks_managed_node_groups = {
-    t4 = {
-      name            = "t4"
-      ami_type        = "AL2_x86_64_GPU"
-      instance_types  = ["g4dn.12xlarge"]
-      capacity_type   = "ON_DEMAND"
-      min_size        = 1
-      max_size        = 1
-      desired_size    = 1
-      disk_size       = 100
-      use_custom_launch_template = false
-      labels = {
-        "gpu"         = "on"
-        "accelerator" = "t4"
-      }
-    }
-
-    a10 = {
-      name            = "a10"
-      ami_type        = "AL2_x86_64_GPU"
-      instance_types  = ["g5.12xlarge"]
-      capacity_type   = "ON_DEMAND"
-      min_size        = 1
-      max_size        = 1
-      desired_size    = 1
-      disk_size       = 100
-      use_custom_launch_template = false
-      labels = {
-        "gpu"         = "on"
-        "accelerator" = "a10g"
-      }
-    }
-  }
+  eks_managed_node_groups = local.eks_managed_node_groups
 
   tags = {
     "Project" = var.cluster_name

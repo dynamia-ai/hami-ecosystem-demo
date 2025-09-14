@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-a-node-binpack-gpu-binpack
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: demo-a
+  template:
+    metadata:
+      labels:
+        app: demo-a
+      annotations:
+        hami.io/node-scheduler-policy: "binpack"
+        hami.io/gpu-scheduler-policy: "binpack"
+    spec:
+      containers:
+      - name: vllm
+        image: vllm/vllm-openai:latest
+        command: ["vllm"]
+        args:
+          - "serve"
+          - "Qwen/Qwen2.5-1.5B-Instruct"
+          - "--dtype"
+          - "auto"
+          - "--gpu-memory-utilization"
+          - "0.65"
+          - "--max-model-len"
+          - "2048"
+          - "--max-num-seqs"
+          - "3"
+        ports:
+        - name: http
+          containerPort: 8000
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+            nvidia.com/gpumem: "7500"

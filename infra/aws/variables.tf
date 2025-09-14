@@ -21,3 +21,21 @@ variable "vpc_cidr" {
   type        = string
   default     = "10.0.0.0/16"
 }
+
+variable "enabled_gpu_node_groups" {
+  description = "List of GPU node groups to enable"
+  type        = list(string)
+  default     = ["t4", "a10g"]
+  # default     = ["t4","v100"]
+}
+
+variable "node_group_overrides" {
+  description = "Override configurations for specific node groups"
+  type = map(object({
+    min_size     = optional(number)
+    max_size     = optional(number)
+    desired_size = optional(number)
+    disk_size    = optional(number)
+  }))
+  default = {}
+}

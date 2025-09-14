@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-c-node-binpack-gpu-spread
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: demo-c
+  template:
+    metadata:
+      labels:
+        app: demo-c
+      annotations:
+        hami.io/node-scheduler-policy: "binpack"
+        hami.io/gpu-scheduler-policy: "spread"
+    spec:
+      containers:
+      - name: vllm
+        image: vllm/vllm-openai:latest
+        command: ["vllm"]
+        args:
+          - "serve"
+          - "Qwen/Qwen2.5-1.5B-Instruct"
+          - "--dtype"
+          - "auto"
+          - "--gpu-memory-utilization"
+          - "0.65"
+          - "--max-model-len"
+          - "2048"
+          - "--max-num-seqs"
+          - "3"
+        ports:
+        - name: http
+          containerPort: 8000
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+            nvidia.com/gpumem: "7500"
